@@ -31,6 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^1.0.7
+  
+  file_picker: ^6.2.0
+  path_provider: ^2.1.2
 
   native_add:
     # When depending on this package from a real application you should use:

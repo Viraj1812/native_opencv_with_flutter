@@ -3,7 +3,37 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:ffi/ffi.dart';
 import 'package:native_add/native_add_bindings_generated.dart';
+
+typedef _CVersionFunc = ffi.Pointer<Utf8> Function();
+typedef _CProcessImageFunc = ffi.Void Function(
+  ffi.Pointer<Utf8>,
+  ffi.Pointer<Utf8>,
+);
+
+// Dart function signatures
+typedef _VersionFunc = ffi.Pointer<Utf8> Function();
+typedef _ProcessImageFunc = void Function(ffi.Pointer<Utf8>, ffi.Pointer<Utf8>);
+
+final _VersionFunc _version = _dylib.lookup<ffi.NativeFunction<_CVersionFunc>>('version').asFunction();
+final _ProcessImageFunc _processImage =
+    _dylib.lookup<ffi.NativeFunction<_CProcessImageFunc>>('process_image').asFunction();
+
+String opencvVersion() {
+  return _version().toDartString();
+}
+
+void processImage(ProcessImageArguments args) {
+  _processImage(args.inputPath.toNativeUtf8(), args.outputPath.toNativeUtf8());
+}
+
+class ProcessImageArguments {
+  final String inputPath;
+  final String outputPath;
+
+  ProcessImageArguments(this.inputPath, this.outputPath);
+}
 
 int sum(int a, int b) => _bindings.sum(a, b);
 int multiply(int a, int b) => _bindings.multiply(a, b);
