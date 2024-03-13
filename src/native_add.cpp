@@ -53,22 +53,51 @@ extern "C" {
         return CV_VERSION;
     }
 
-    FFI_PLUGIN_EXPORT void process_image(char* inputImagePath, char* outputImagePath) {
+    FFI_PLUGIN_EXPORT intptr_t process_image(char* inputImagePath, char* outputImagePath) {
         
         Mat input = imread(inputImagePath, IMREAD_GRAYSCALE);
-        Mat threshed, withContours;
+        Mat input_rgb = imread(inputImagePath, IMREAD_UNCHANGED);
+        Mat edges_img, blur_img, erode_img;
+        float perimeter, area, circularity;
+        Rect rect;
+        vector<vector<Point>> filtered_contours;
 
         vector<vector<Point>> contours;
         vector<Vec4i> hierarchy;
+
+        GaussianBlur(input, blur_img, Size(5, 5), 0);
+        threshold(blur_img, edges_img, 120, 255, THRESH_BINARY);
+        erode(edges_img, erode_img, Mat(), Point(-1, -1), 3);
+        findContours(erode_img, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+
+        for(int i = 0; i< contours.size() ;i++){
+            perimeter = arcLength(contours[i], true);
+            area = contourArea(contours[i]);
+            rect = boundingRect(contours[i]);
+            try
+            {
+                circularity = 4 * 3.1428 * (area / (perimeter * perimeter));
+            }
+            catch(const std::exception& e)
+            {
+                continue;
+            }
+            if(area > 100 && circularity > 0.5){
+                filtered_contours.push_back(contours[i]);
+            };
+        }
+        int i = 1;
+        for (const auto& contour : filtered_contours) {
+            rect = boundingRect(contour);
+            int r = ((rect.width + rect.height) / 2) / 2 + 3;
+            circle(input_rgb, Point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)), r, Scalar(0, 255, 0), 2);
+            putText(input_rgb, to_string(i), Point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)), 1, 2, Scalar(0, 0, 255), 2);
+            i++;
+        }
         
-        adaptiveThreshold(input, threshed, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, 77, 6);
-        findContours(threshed, contours, hierarchy, RETR_TREE, CHAIN_APPROX_TC89_L1);
-        
-        cvtColor(threshed, withContours, COLOR_GRAY2BGR);
-        drawContours(withContours, contours, -1, Scalar(0, 255, 0), 4);
-        
-        imwrite(outputImagePath, withContours);
-        
+        imwrite(outputImagePath, input_rgb);
+        return i;
     }
     
     

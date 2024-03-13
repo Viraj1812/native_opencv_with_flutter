@@ -11,6 +11,8 @@ const title = 'Native OpenCV Example';
 
 late Directory tempDir;
 
+int result = 0;
+
 String get tempPath => '${tempDir.path}/temp.jpg';
 
 void main() {
@@ -34,13 +36,15 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   final _picker = ImagePicker();
-
+  int temp = 0;
   bool _isProcessed = false;
   bool _isWorking = false;
 
@@ -117,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 if (_isProcessed && !_isWorking)
                   ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 3000, maxHeight: 300),
+                    constraints: BoxConstraints(maxWidth: 900, maxHeight: 900),
                     child: Image.file(
                       File(tempPath),
                       alignment: Alignment.center,
@@ -133,6 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Text('Process photo'),
                       onPressed: takeImageAndProcess,
                     ),
+                    Text("${result}")
                   ],
                 )
               ],
